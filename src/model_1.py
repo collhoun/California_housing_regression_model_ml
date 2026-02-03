@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import json
 import datetime
+import os
 
 X = read_csv('data/features.csv')
 y = read_csv('data/target.csv').to_numpy().ravel()
@@ -69,7 +70,8 @@ for _ in range(N):
     Qe = lm * loss(w, X_train_scaled, y_train) + (1 - lm) * Qe
     w -= eta * gradient(w, X_train_scaled, y_train)
 
-data = {
+model_benchmark = {
+    'model': f'{os.path.basename(__file__)}',
     'omega': w[1:].tolist(),
     'bias': w[0],
     'eta': eta,
@@ -81,6 +83,15 @@ data = {
     'mse_on_test': loss(w, X_test_scaled, y_test)
 }
 
+try:
+    with open('./data/model.json', 'r', encoding='utf-8') as file:
+        data = json.load(file)
+        if len(data) > 1000:
+            data = []
+except FileNotFoundError:
+    data = []
 
-with open('./data/model.json', 'a', encoding='utf-8') as file:
-    json.dump(data, file)
+
+with open('./data/model.json', 'w', encoding='utf-8') as file:
+    data.append(model_benchmark)
+    json.dump(data, file, indent=4)
