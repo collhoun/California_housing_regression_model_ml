@@ -8,10 +8,17 @@ import os
 
 
 class LinearRegressionModel:
-    def __init__(self, eta=0.15, N_iterations=1000) -> None:
+    def __init__(self, eta=0.15, N_iterations=1000, data_filename='./data/features.csv', target_filename='./data/target.csv') -> None:
         self.eta = eta
         self.N_iterations = N_iterations
         self.w = None
+        self.X = self.data_reader(data_filename)
+        self.y = self.data_reader(
+            target_filename).to_numpy().ravel()  # type: ignore
+        self.X_train, self.X_test, self.y_train, self.y_test = self.data_train_split(
+            self.X, self.y, 0.2)
+        self.X_train_scaled, self.X_test_scaled = self.data_scaler(
+            self.X_train, self.X_test)
 
     def model(self, w, X):
         """
@@ -46,13 +53,6 @@ class LinearRegressionModel:
         return grad
 
     def GD(self):
-        self.X = self.data_reader('./data/features.csv')
-        self.y = self.data_reader(
-            './data/target.csv').to_numpy().ravel()  # type: ignore
-        self.X_train, self.X_test, self.y_train, self.y_test = self.data_train_split(
-            self.X, self.y, 0.2)
-        self.X_train_scaled, self.X_test_scaled = self.data_scaler(
-            self.X_train, self.X_test)
         if self.w is None:
             self.w = np.zeros(self.X_train_scaled.shape[1])
         for _ in range(self.N_iterations):
