@@ -122,4 +122,9 @@ class LinearRegressionModel:
 
 if __name__ == '__main__':
     model = LinearRegressionModel()
-    model.GD()
+    model.eta = 0.1
+    step = 0.01
+    while model.eta < 1:
+        model.w = np.zeros(model.X_train_scaled.shape[1])
+        model.GD()
+        model.eta += step
