@@ -4,11 +4,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import json
 import datetime
+import sys
 import os
 
 
 class LinearRegressionModel:
-    def __init__(self, eta=0.15, N_iterations=1000, data_filename='./data/features.csv', target_filename='./data/target.csv') -> None:
+    def __init__(self, eta: float = 0.15, N_iterations: int = 1000, data_filename: str = './data/features.csv', target_filename: str = './data/target.csv', test_size: float = 0.2) -> None:
         self.eta = eta
         self.N_iterations = N_iterations
         self.w = None
@@ -16,11 +17,11 @@ class LinearRegressionModel:
         self.y = self.data_reader(
             target_filename).to_numpy().ravel()  # type: ignore
         self.X_train, self.X_test, self.y_train, self.y_test = self.data_train_split(
-            self.X, self.y, 0.2)
+            self.X, self.y, test_size)
         self.X_train_scaled, self.X_test_scaled = self.data_scaler(
             self.X_train, self.X_test)
 
-    def model(self, w, X):
+    def model(self, w, X) -> float:
         """
         Модель для угадывания цен на дома 
 
@@ -29,7 +30,7 @@ class LinearRegressionModel:
         """
         return X @ w
 
-    def loss(self, w, X, y):
+    def loss(self, w, X, y) -> float:
         """
         Квадратичная функция потерь
 
@@ -41,7 +42,7 @@ class LinearRegressionModel:
 
     def gradient(self, w, X, y):
         """
-        Градиент функции потерь (не совсем понятно как получить градиент в матричном виде, взял у иишки)
+        Градиент функции потерь
 
         :param w: веса модели
         :param X: матрица признаков
@@ -52,7 +53,12 @@ class LinearRegressionModel:
         grad = (2 / n) * X.T @ error
         return grad
 
-    def GD(self):
+    def GD(self) -> None:
+        """
+        Градиентный спуск
+
+        :param self: 
+        """
         if self.w is None:
             self.w = np.zeros(self.X_train_scaled.shape[1])
         for _ in range(self.N_iterations):
@@ -85,8 +91,12 @@ class LinearRegressionModel:
     def model_report(self, columns: list, filename: str = './data/models.json') -> None:
         if self.w is None:
             return
+
+        current_module = sys.modules[self.__class__.__module__]
+        current_filename = os.path.basename(
+            current_module.__file__)  # type: ignore
         model_benchmark = {
-            'model': f'{os.path.basename(__file__)}',
+            'model': current_filename,
             'omega': self.w[1:].tolist(),
             'bias': self.w[0],
             'eta': self.eta,
