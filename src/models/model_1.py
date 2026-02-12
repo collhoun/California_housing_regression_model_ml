@@ -16,10 +16,11 @@ class LinearRegressionModel:
         self.X = self.data_reader(data_filename)
         self.y = self.data_reader(
             target_filename).to_numpy().ravel()  # type: ignore
-        self.X_train, self.X_test, self.y_train, self.y_test = self.data_train_split(
+        self.X_train, self.X_test, self.y_train, self.y_test = self.data_split(
             self.X, self.y, test_size)
-        self.X_train_scaled, self.X_test_scaled = self.data_scaler(
-            self.X_train, self.X_test)
+        self.X_train_scaled = self.data_scaler(
+            self.X_train)
+        self.X_test_scaled = self.data_scaler(self.X_test)
 
     def model(self, w, X) -> float:
         """
@@ -60,7 +61,7 @@ class LinearRegressionModel:
         :param self: 
         """
         if self.w is None:
-            self.w = np.zeros(self.X_train_scaled.shape[1])
+            self.w = np.zeros(self.X_train_scaled.shape[1])  # type: ignore
         for _ in range(self.N_iterations):
             self.w -= self.eta * \
                 self.gradient(self.w, self.X_train_scaled, self.y_train)
@@ -73,20 +74,18 @@ class LinearRegressionModel:
         except FileNotFoundError:
             return None
 
-    def data_train_split(self, X, y, test_size: float) -> list:
+    def data_split(self, X, y, test_size: float):
         return train_test_split(X, y, test_size=test_size, random_state=1)
 
-    def data_scaler(self, X_train, X_test) -> tuple:
+    def data_scaler(self, X) -> tuple:
         # Масштабирование признаков (обязательно для градиентного спуска)
         scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
+        X_scaled = scaler.fit_transform(X)
 
         # Добавление столбца единиц для смещения (w0)
-        X_train_scaled = np.c_[
-            np.ones(X_train_scaled.shape[0]), X_train_scaled]
-        X_test_scaled = np.c_[np.ones(X_test_scaled.shape[0]), X_test_scaled]
-        return X_train_scaled, X_test_scaled
+        X_scaled = np.c_[
+            np.ones(X_scaled.shape[0]), X_scaled]
+        return X_scaled
 
     def model_report(self, columns: list, filename: str = './data/models.json') -> None:
         if self.w is None:
@@ -122,9 +121,4 @@ class LinearRegressionModel:
 
 if __name__ == '__main__':
     model = LinearRegressionModel()
-    model.eta = 0.1
-    step = 0.01
-    while model.eta < 1:
-        model.w = np.zeros(model.X_train_scaled.shape[1])
-        model.GD()
-        model.eta += step
+    model.GD()
